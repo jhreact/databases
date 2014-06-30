@@ -24,7 +24,7 @@ var collectData = function(req, callback) {
     data += chunk;
   });
   req.addListener('end', function() {
-    callback(null, JSON.parse(data));
+    callback(null, data);
   });
 };
 
@@ -45,12 +45,11 @@ var sendMessages = function(res, rows, statusCode) {
   sendResponse(res, {results: messages}, statusCode);
 };
 
-var messages = [];
 var chatMessages = function(req, res) {
   if (req.method === 'POST') {
     collectData(req, function(err, data) {
-      var message = data;
-      messages.push(message);
+      data = querystring.parse(data);
+      var message = {username: data.username, text: data.message};
       db.query("INSERT INTO messages SET ?", message, function(err) {
         if (err) throw err;
         db.query("SELECT * FROM messages", function(err, messages) {
