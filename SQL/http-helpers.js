@@ -15,7 +15,7 @@ var sendResponse = function(res, data, statusCode, ctype) {
   statusCode = statusCode || 200;
   headers['Content-Type'] = ctype || "application/json";
   res.writeHead(statusCode, headers);
-  res.end(JSON.stringify(data));
+  res.end(data);
 };
 
 var collectData = function(req, callback) {
@@ -24,6 +24,7 @@ var collectData = function(req, callback) {
     data += chunk;
   });
   req.addListener('end', function() {
+    data = querystring.parse(data);
     callback(null, data);
   });
 };
@@ -48,13 +49,12 @@ var sendMessages = function(res, rows, statusCode) {
 var chatMessages = function(req, res) {
   if (req.method === 'POST') {
     collectData(req, function(err, data) {
-      data = querystring.parse(data);
       var message = {username: data.username, text: data.message};
       db.query("INSERT INTO messages SET ?", message, function(err) {
         if (err) throw err;
         db.query("SELECT * FROM messages", function(err, messages) {
           if (err) throw err;
-          sendResponse(res, {results: messages}, 201);
+          sendResponse(res, JSON.stringify({results: messages}), 201);
         });
       });
     });
@@ -62,7 +62,7 @@ var chatMessages = function(req, res) {
     // console.log(messages);
     db.query("SELECT * FROM messages", function(err, messages) {
       if (err) throw err;
-      sendResponse(res, {results: messages});
+      sendResponse(res, JSON.stringify({results: messages}));
     });
   }
 };
